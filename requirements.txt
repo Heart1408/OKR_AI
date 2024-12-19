@@ -4,5 +4,7 @@ langchain_chroma
 langgraph
 langchain_text_splitters
 langchain_openai
-langchain_google_genai
+langchain_google_genai==2.0.7
 pydantic
+fastapi
+unicorn
