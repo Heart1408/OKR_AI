@@ -8,24 +8,16 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 
 from src.base.llm_model import get_llm
-from src.rag.main import retriever
+from src.assistant.tool import retrieve
 
 load_dotenv()
 
 llm = get_llm()
-genai_docs = "./data_source/generative_ai"
-retriever = retriever(data_dir=genai_docs, data_type="pdf")
 memory = MemorySaver()
 CHAT_MESSAGE_NUMBER = int(os.getenv("CHAT_MESSAGE_NUMBER", 10))
 
 class State(MessagesState):
     summary: str
-
-@tool
-def retrieve(query: str):
-    """Retrieve information related to a query."""
-    retriever_results = retriever.invoke(query)
-    return "\n\n".join(doc.page_content for doc in retriever_results)
 
 tools = ToolNode(tools=[retrieve])
 
