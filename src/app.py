@@ -36,8 +36,8 @@ async def check():
 
 @app.post("/generative_ai", response_model=OutputQA)
 async def generative_ai(inputs: InputQA):
-    answer = assistant(inputs.question)
-    return {"answer": answer}
+    conversation = assistant(inputs.question, inputs.thread_id)
+    return {"conversation": conversation}
 
 # add_routes(app,
 #             genai_chain,
