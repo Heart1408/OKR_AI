@@ -4,6 +4,7 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from langserve import add_routes
 
+from src.database.main import InputObject, OutputAnalysis, analysis
 from src.base.llm_model import get_llm
 from src.rag.main import build_rag_chain, retriever, InputQA, OutputQA
 from src.assistant.assistant import assistant
@@ -37,6 +38,11 @@ async def check():
 @app.post("/generative_ai", response_model=OutputQA)
 async def generative_ai(inputs: InputQA):
     answer = assistant(inputs.question)
+    return {"answer": answer}
+
+@app.post("/analysis", response_model=OutputAnalysis)
+async def analysisonOKR(inputs: InputObject):
+    answer = analysis(inputs.object_id)
     return {"answer": answer}
 
 # add_routes(app,

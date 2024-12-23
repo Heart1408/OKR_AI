@@ -4,5 +4,8 @@ langchain_chroma
 langgraph
 langchain_text_splitters
 langchain_openai
-langchain_google_genai
 pydantic
+httpx==0.27.2
+pypdf
+mysql
+mysql-connector
