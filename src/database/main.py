@@ -1,4 +1,4 @@
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from pydantic import BaseModel, Field
 from src.base.llm_model import get_llm
 from src.database.tool import tools, get_last_two_check_in_key_result, get_objective_data
@@ -44,16 +44,33 @@ def analysis(object_id):
         - Include a 5-star rating system (★) for evaluation.
         """
 
-    messages = [ HumanMessage(query)]
+    messages = [ SystemMessage(system), HumanMessage(query)]
 
-    ai_msg = llm_with_tools.invoke(messages)
+    ai_msg = AIMessage(content='',additional_kwargs={
+        'tool_calls': 
+        [
+            {
+                'id': 'call_VkdJdlEkrWjvuQsvZ93lefdM',
+                'function': {
+                    'arguments': '{"object_id": 27}', 'name': 'get_objective_data'
+                },
+                'type': 'function'
+            },
+            {
+                'id': 'call_0ED0qva3BDBHJUBaOf3EWhIZ',
+                'function': {
+                    'arguments': '{"object_id": 27}', 'name': 'get_last_two_check_in_key_result'
+                },
+                'type': 'function'
+            }
+        ],
+        'refusal': None}
+    )
     messages.append(ai_msg)
     for tool_call in ai_msg.tool_calls:
         selected_tool = {"get_objective_data": get_objective_data, "get_last_two_check_in_key_result": get_last_two_check_in_key_result}[tool_call["name"].lower()]
         tool_msg = selected_tool.invoke(tool_call)
         messages.append(tool_msg)
-    
-    messages.append(SystemMessage(system))
     
     res = llm_with_tools.invoke(messages)
 
