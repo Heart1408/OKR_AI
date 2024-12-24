@@ -1,20 +1,25 @@
 import os
 from dotenv import load_dotenv
 from typing import Literal
-from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage, RemoveMessage, ToolMessage
 from langgraph.graph import MessagesState, StateGraph, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 
 from src.base.llm_model import get_llm
-from src.assistant.tool import retrieve
+from src.assistant.tool import retrieve, suggestOKR
 
 load_dotenv()
 
 llm = get_llm()
 memory = MemorySaver()
 CHAT_MESSAGE_NUMBER = int(os.getenv("CHAT_MESSAGE_NUMBER", 10))
+_content = """
+You are a helpful assistant that answers questions based on the context provided.
+You will support information about OKR (Objectives and Key Results) and suggest Key Results (KR) for OKRs.
+If you are sure the question is not related to the OKR system, answer I do not have information about this question and suggest another question.
+If the question is vague, ask the user for more information.
+"""
 
 class State(MessagesState):
     summary: str
@@ -27,9 +32,9 @@ def query_or_respond(state: State):
     summary = state.get("summary", "")
     if summary:
         system_message = f"Summary of conversation earlier: {summary}"
-        messages = [SystemMessage(content=system_message)] + state["messages"]
+        messages = [SystemMessage(content=_content + system_message)] + state["messages"]
     else:
-        messages = state["messages"]
+        messages = [SystemMessage(content=_content)] + state["messages"]
     response = llm_with_tools.invoke(messages)
 
     return {"messages": [response]}
@@ -69,7 +74,9 @@ def generate(state: State):
     docs_content = "\n\n".join(doc.content for doc in tool_messages)
     system_message_content = (
         "Answer the user's questions based on the below context."
-        "If the context doesn't contain any relevant information to the question, don't make something up and just say \"I don't know\":"
+        "If the context does not contain any information related to the question, don't make it up, answer that you do not contain information about the question, and suggest to the user what information you can answer:"
+        "If the question asks to suggest KR for OKR, even though the context does not contain this information, give suggestions to the user like an expert."
+        "Including OKRs: ..., then give the KRs one by one. respectively, each KR on 1 line."
         "\n\n"
         f"{docs_content}"
     )

@@ -8,3 +8,6 @@ langchain_google_genai==2.0.7
 pydantic
 fastapi
 unicorn
+streamlit
+stauth
+streamlit_authenticator
