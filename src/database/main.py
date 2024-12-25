@@ -52,14 +52,14 @@ def analysis(object_id):
             {
                 'id': 'call_VkdJdlEkrWjvuQsvZ93lefdM',
                 'function': {
-                    'arguments': '{"object_id": 27}', 'name': 'get_objective_data'
+                    'arguments': '{"object_id": '+str(object_id)+'}', 'name': 'get_objective_data'
                 },
                 'type': 'function'
             },
             {
                 'id': 'call_0ED0qva3BDBHJUBaOf3EWhIZ',
                 'function': {
-                    'arguments': '{"object_id": 27}', 'name': 'get_last_two_check_in_key_result'
+                    'arguments': '{"object_id": '+str(object_id)+'}', 'name': 'get_last_two_check_in_key_result'
                 },
                 'type': 'function'
             }
