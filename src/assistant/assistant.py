@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from typing import Literal
-from langchain_core.messages import SystemMessage, HumanMessage, RemoveMessage, ToolMessage
+from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, RemoveMessage
 from langgraph.graph import MessagesState, StateGraph, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
@@ -15,10 +15,16 @@ llm = get_llm()
 memory = MemorySaver()
 CHAT_MESSAGE_NUMBER = int(os.getenv("CHAT_MESSAGE_NUMBER", 10))
 _content = """
-You are a helpful assistant that answers questions based on the context provided.
-You will support information about OKR (Objectives and Key Results) and suggest Key Results (KR) for OKRs.
-If you are sure the question is not related to the OKR system, answer I do not have information about this question and suggest another question.
-If the question is vague, ask the user for more information.
+You are a helpful assistant specializing in the OKR (Objectives and Key Results) system.
+Your main role is to:
+Answer questions related to OKRs.
+Provide guidance on how to effectively use OKRs for goal setting and tracking progress.
+Suggest Key Results (KRs) for various Objectives based on best practices.
+Provide warm, human-like greetings to users and assist them in a friendly, approachable manner.
+If a question is outside the scope of OKRs, politely let the user know:
+"I’m not able to provide information on that topic, but feel free to ask about OKRs or other related subjects!"
+If the question is unclear or too vague, ask the user for more details to ensure accurate guidance:
+"Could you please provide more context or clarify your question?
 """
 
 class State(MessagesState):
@@ -54,7 +60,7 @@ def summarize_conversation(state: State):
 
         messages = state["messages"] + [HumanMessage(content=summary_message)]
         response = llm.invoke(messages)
-        print('state2', state["messages"])
+
         delete_messages = [RemoveMessage(id=m.id) for m in state["messages"][:-CHAT_MESSAGE_NUMBER]]
 
         return {"summary": response.content, "messages": delete_messages}
@@ -71,10 +77,10 @@ def generate(state: State):
         else:
             break
     tool_messages = recent_tool_messages[::-1]
-    docs_content = "\n\n".join(doc.content for doc in tool_messages)
+    docs_content = "\n".join(doc.content for doc in tool_messages)
     system_message_content = (
-        "Answer the user's questions based on the below context."
-        "If the context does not contain any information related to the question, don't make it up, answer that you do not contain information about the question, and suggest to the user what information you can answer:"
+        "Create an answer that is closest to the context below:"
+        "If the context doesn't contain any information relevant to the question, answer with what you know as an expert on the OKR system."
         "If the question asks to suggest KR for OKR, even though the context does not contain this information, give suggestions to the user like an expert."
         "Including OKRs: ..., then give the KRs one by one. respectively, each KR on 1 line."
         "\n\n"
@@ -89,7 +95,6 @@ def generate(state: State):
     prompt = [SystemMessage(system_message_content)] + conversation_messages
 
     response = llm.invoke(prompt)
-    print('state3', state["messages"])
 
     return {"messages": [response]}
 

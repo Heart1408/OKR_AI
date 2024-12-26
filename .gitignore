@@ -1,3 +1,6 @@
 __pycache__/
 env/
 .env
+langchain_env/
+training_datas/
+vector_stores/

@@ -2,7 +2,7 @@ import os
 
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-from langserve import add_routes
+# from langserve import add_routes
 
 from src.base.llm_model import get_llm
 from src.rag.main import build_rag_chain, retriever, InputQA, OutputQA

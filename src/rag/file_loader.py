@@ -2,7 +2,7 @@ import glob
 import multiprocessing
 from tqdm import tqdm
 from typing import Union, List, Literal
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def remove_none_utf8_characters(text):
@@ -87,3 +87,25 @@ class Loader:
         else:
             raise ValueError("file_type must be pdf")
         return self.load(files, workers=workers)
+    
+# ------------------------------------------------------------------------------
+def document_loader(TRAINING_DIR):
+    """Load files from training directory as documents. File can be PDF."""
+
+    documents = []
+    pdf_loader = DirectoryLoader(
+        TRAINING_DIR.as_posix(),
+        glob="**/*.pdf",
+        loader_cls=PyPDFLoader,
+        show_progress=True,
+    )
+    documents.extend(pdf_loader.load())
+
+    return documents
+
+def split_documents_to_chunks(documents):
+    """Split documents to chunks using RecursiveCharacterTextSplitter."""
+
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1600, chunk_overlap=200)
+    chunks = text_splitter.split_documents(documents)
+    return chunks

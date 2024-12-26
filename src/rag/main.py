@@ -12,8 +12,9 @@ class OutputQA(BaseModel):
     conversation: List[Dict[str, str]]
 
 def retriever(data_dir, data_type):
-    doc_loaded = Loader(file_type=data_type).load_dir(data_dir, workers=2)
-    retriever = VectorDB(documents = doc_loaded).get_retriever()
+    # doc_loaded = Loader(file_type=data_type).load_dir(data_dir, workers=2)
+    # retriever = VectorDB(documents = doc_loaded).get_retriever()
+    retriever = VectorDB().get_retriever()
 
     return retriever
 

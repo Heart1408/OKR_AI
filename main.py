@@ -2,9 +2,13 @@ import yaml
 from yaml.loader import SafeLoader
 import streamlit as st
 import streamlit_authenticator as stauth
-from layouts.file_upload import file_upload
-from layouts.file_list import file_list
+from src.screen.layouts.file_upload import file_upload
+from src.screen.layouts.file_list import file_list
 import subprocess
+from pathlib import Path
+
+TRAINING_DIR = Path(__file__).resolve().parent.joinpath("data_source", "training_datas")
+LOCAL_VECTOR_STORE_DIR = Path(__file__).resolve().parent.joinpath("data_source", "vector_stores")
 
 with open('credential_config.yaml', 'r') as file:
     config = yaml.load(file, Loader=SafeLoader)
@@ -29,7 +33,7 @@ if st.session_state['authentication_status']:
     with tab1:
         file_list(file_path)
     with tab2:
-        file_upload(file_path)
+        file_upload(TRAINING_DIR, LOCAL_VECTOR_STORE_DIR)
 
     if "run_command" in st.session_state and st.session_state["run_command"]:
         command = 'uvicorn src.app:app --host "0.0.0.0" --port 5000 --reload'
