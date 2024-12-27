@@ -1,4 +1,5 @@
 __pycache__/
 env/
 .env
-langchain_env
+langchain_env/
+data_source/

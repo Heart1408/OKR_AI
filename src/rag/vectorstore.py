@@ -2,7 +2,6 @@ from typing import Union
 from langchain_chroma import Chroma
 from langchain_community.vectorstores import FAISS
 from src.base.llm_model import get_model_embedding
-# from vertexai.language_models import TextEmbeddingModel
 
 class VectorDB:
     def __init__(self,
@@ -10,8 +9,6 @@ class VectorDB:
                 vector_db: Union[Chroma, FAISS] = Chroma,
                 embedding=None
                 ) -> None:
-        
-        # self.embedding = embedding or TextEmbeddingModel.from_pretrained("textembedding-gecko-multilingual@001")
         self.embedding = embedding or get_model_embedding()
         self.vector_db = vector_db
         self.db = self._build_db(documents)

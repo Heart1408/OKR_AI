@@ -6,12 +6,14 @@ retriever = retriever(data_dir=genai_docs, data_type="pdf")
 
 @tool
 def retrieve(query: str):
-    """Retrieve information related to a query."""
+    """Retrieve information related to OKR."""
     retriever_results = retriever.invoke(query)
     return "\n\n".join(doc.page_content for doc in retriever_results)
 
 @tool
 def suggestOKR(query: str):
-    """Suggest corresponding OKR and KR."""
-    return ""
+    """
+    Suggest Key Results (KR) for OKRs based on the user's query.
+    """
 
+    return ""

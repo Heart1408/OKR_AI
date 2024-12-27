@@ -2,7 +2,7 @@ import glob
 import multiprocessing
 from tqdm import tqdm
 from typing import Union, List, Literal
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def remove_none_utf8_characters(text):
