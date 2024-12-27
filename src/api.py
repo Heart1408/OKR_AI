@@ -39,6 +39,7 @@ async def check():
 async def generative_ai(inputs: InputQA):
     conversation = assistant(inputs.question, inputs.thread_id)
     return {"conversation": conversation}
+
 @app.post("/analysis", response_model=OutputAnalysis)
 async def analysisonOKR(inputs: InputObject):
     answer = analysis(inputs.object_id)

@@ -17,5 +17,4 @@ mysql
 mysql-connector
 langchain_google_genai==2.0.7
 langserve
-fastapi
 unicorn
