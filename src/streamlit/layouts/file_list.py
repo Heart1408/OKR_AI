@@ -1,8 +1,9 @@
 import streamlit as st
 import os
 
-def file_list(file_path):
+def file_list(TRAINING_DIR):
     st.header("Training Files")
+    file_path = TRAINING_DIR.as_posix()
     selected_files = []
 
     if os.path.exists(file_path):
@@ -20,12 +21,11 @@ def file_list(file_path):
                         st.markdown(f"<span style='color: red;'>{file}</span>", unsafe_allow_html=True)
                     else:
                         st.write(file)
-            
+
             if st.button("Delete Selected Files"):
                 for file in selected_files:
                     os.remove(file)
 
-                st.session_state["run_command"] = True
                 st.rerun()
         else:
             st.write("No files found.")

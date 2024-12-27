@@ -7,7 +7,7 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 
 from src.base.llm_model import get_llm
-from src.assistant.tool import retrieve, suggestOKR
+from src.assistant.tool import retrieve
 
 load_dotenv()
 

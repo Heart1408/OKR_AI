@@ -1,45 +1,42 @@
+import yaml
+from yaml.loader import SafeLoader
+import streamlit as st
+import streamlit_authenticator as stauth
+from pathlib import Path
+import sys
 import os
 
-from fastapi import FastAPI, APIRouter
-from fastapi.middleware.cors import CORSMiddleware
-# from langserve import add_routes
+sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
-from src.base.llm_model import get_llm
-from src.rag.main import build_rag_chain, retriever, InputQA, OutputQA
-from src.assistant.assistant import assistant
+from src.streamlit.layouts.file_upload import file_upload
+from src.streamlit.layouts.file_list import file_list
 
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.abspath("gg_authentication.json")
+TRAINING_DIR = Path(__file__).resolve().parent.parent.joinpath("data_source", "generative_ai")
 
-llm = get_llm()
-genai_docs = "./data_source/generative_ai"
+with open('credential_config.yaml', 'r') as file:
+    config = yaml.load(file, Loader=SafeLoader)
 
-retriever = retriever(data_dir=genai_docs, data_type="pdf")
-genai_chain = build_rag_chain(llm, retriever)
-router = APIRouter()
-app = FastAPI(
-    title="LangChain Server",
-    version="1.0",
-    description="Simple api with LangChain Server",
-)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days'],
 )
 
-@app.get("/check")
-async def check():
-    return {"status": "ok"}
+try:
+    authenticator.login()
+except Exception as e:
+    st.error(e)
 
-@app.post("/generative_ai", response_model=OutputQA)
-async def generative_ai(inputs: InputQA):
-    conversation = assistant(inputs.question, inputs.thread_id)
-    return {"conversation": conversation}
+if st.session_state['authentication_status']:
+    authenticator.logout()
 
-# add_routes(app,
-#             genai_chain,
-#             playground_type="default",
-#             path="/generative_ai")
+    tab1, tab2 = st.tabs(["List Files", "Upload Files"])
+    with tab1:
+        file_list(TRAINING_DIR)
+    with tab2:
+        file_upload(TRAINING_DIR)
+elif st.session_state['authentication_status'] == False:
+    st.error('Username/password is incorrect')
+elif st.session_state['authentication_status'] == None:
+    st.warning('Please enter your username and password')
