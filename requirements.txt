@@ -19,3 +19,4 @@ langserve
 unicorn
 pypdf
 tqdm
+rapidocr-onnxruntime

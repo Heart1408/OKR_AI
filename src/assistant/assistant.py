@@ -17,10 +17,9 @@ CHAT_MESSAGE_NUMBER = int(os.getenv("CHAT_MESSAGE_NUMBER", 10))
 _content = """
 You are a helpful assistant specializing in the OKR (Objectives and Key Results) system.
 Your main role is to:
--Answer questions related to OKRs.
--Provide guidance on how to effectively use OKRs for goal setting and tracking progress.
--Suggest Key Results (KRs) for various Objectives based on best practices.
--Provide warm, human-like greetings to users and assist them in a friendly, approachable manner.
+- Retrieve information related to question, even if the question is unrelated to the OKR system.
+- Suggest Key Results (KRs) for various Objectives based on best practices.
+- Provide warm, human-like greetings to users and assist them in a friendly, approachable manner.
 """
 
 class State(MessagesState):
@@ -36,8 +35,7 @@ def query_or_respond(state: State):
         system_message = f"Summary of conversation earlier: {summary}"
         messages = [SystemMessage(content=_content + system_message)] + state["messages"]
     else:
-        # messages = [SystemMessage(content=_content)] + state["messages"]
-        messages = state["messages"]
+        messages = [SystemMessage(content=_content)] + state["messages"]
     response = llm_with_tools.invoke(messages)
 
     return {"messages": [response]}
@@ -75,10 +73,10 @@ def generate(state: State):
     tool_messages = recent_tool_messages[::-1]
     docs_content = "\n".join(doc.content for doc in tool_messages)
     system_message_content = (
-        "Provide an accurate response based on the context below, even if the question is unrelated to the OKR system. \n"
+        "Provide an accurate response based on the context below\n"
         "Exceptions: \n"
         "Case 1. If the context does not provide enough information to answer the question, give the most relevant response based on the available context and your knowledge.\n"
-        "Case 2. If the context contains little or no relevant information:\n"
+        "Case 2. If the context no relevant information:\n"
             "- If the question clearly falls outside the scope of OKRs, politely inform the user: "
             "I cannot provide information on that topic. I am an assistant supporting the OKR system, and I can provide information and answer any questions related to OKRs.\n"
             "- If the question is unclear or too vague, ask the user for more details to ensure an accurate response: "
@@ -93,10 +91,9 @@ def generate(state: State):
         if message.type in ("human", "system")
         or (message.type == "ai" and not message.tool_calls)
     ]
-    prompt = [SystemMessage(_content + system_message_content)] + conversation_messages
+    prompt = [SystemMessage(system_message_content)] + conversation_messages
 
     response = llm.invoke(prompt)
-
     return {"messages": [response]}
 
 def delete_tool_messages(state: State):
@@ -112,12 +109,11 @@ graph_builder.add_node(delete_tool_messages)
 graph_builder.set_entry_point("query_or_respond")
 
 graph_builder.add_edge("query_or_respond", "summarize_conversation")
-# graph_builder.add_conditional_edges(
-#     "summarize_conversation",
-#     tools_condition,
-#     {"tools": "tools", END: END},
-# )
-graph_builder.add_edge("summarize_conversation", "tools")
+graph_builder.add_conditional_edges(
+    "summarize_conversation",
+    tools_condition,
+    {"tools": "tools", END: END},
+)
 graph_builder.add_edge("tools", "generate")
 graph_builder.add_edge("generate", "delete_tool_messages")
 graph_builder.add_edge("delete_tool_messages", END)
