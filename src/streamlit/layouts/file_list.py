@@ -43,5 +43,5 @@ def file_list(TRAINING_DIR):
     else:
         st.write("Folder does not exist.")
     
-    if "success_message" in st.session_state:
+    if "success_message" in st.session_state and st.session_state.success_message != "":
         st.success(st.session_state.success_message)

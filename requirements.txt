@@ -11,3 +11,12 @@ uvicorn
 streamlit
 stauth
 streamlit_authenticator
+httpx==0.27.2
+pypdf
+mysql
+mysql-connector
+langserve
+unicorn
+pypdf
+tqdm
+rapidocr-onnxruntime

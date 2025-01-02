@@ -6,7 +6,7 @@ retriever = retriever(data_dir=genai_docs, data_type="pdf")
 
 @tool
 def retrieve(query: str):
-    """Retrieve information related to OKR."""
+    """Retrieve information related to query."""
     retriever_results = retriever.invoke(query)
     return "\n\n".join(doc.page_content for doc in retriever_results)
 

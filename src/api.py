@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.base.llm_model import get_llm
 from src.rag.main import build_rag_chain, retriever, InputQA, OutputQA
 from src.assistant.assistant import assistant
+from src.database.main import InputObject, OutputAnalysis, analysis
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.abspath("gg_authentication.json")
@@ -39,6 +40,10 @@ async def generative_ai(inputs: InputQA):
     conversation = assistant(inputs.question, inputs.thread_id)
     return {"conversation": conversation}
 
+@app.post("/analysis", response_model=OutputAnalysis)
+async def analysisonOKR(inputs: InputObject):
+    answer = analysis(inputs.object_id)
+    return {"answer": answer}
 # add_routes(app,
 #             genai_chain,
 #             playground_type="default",
