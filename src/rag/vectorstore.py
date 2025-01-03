@@ -1,5 +1,6 @@
 from typing import Union
-from langchain_chroma import Chroma
+# from langchain_chroma import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain_community.vectorstores import FAISS
 from src.base.llm_model import get_model_embedding
 
