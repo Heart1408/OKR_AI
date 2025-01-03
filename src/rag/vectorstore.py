@@ -2,9 +2,6 @@ from typing import Union
 from langchain_chroma import Chroma
 from langchain_community.vectorstores import FAISS
 from src.base.llm_model import get_model_embedding
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 class VectorDB:
     def __init__(self,

@@ -21,4 +21,4 @@ unicorn
 pypdf
 tqdm
 rapidocr-onnxruntime
-pysqlite3-binary>=3.35.0
+pysqlite3-binary
