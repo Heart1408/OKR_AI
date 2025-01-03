@@ -2,8 +2,8 @@ import streamlit as st
 import sys
 import os
 import time
-__import__('pysqlite3')
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# __import__('pysqlite3')
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 from dotenv import load_dotenv
 from langchain_core.tools import tool
@@ -164,52 +164,21 @@ def assistant(query: str, thread_id: str):
     except Exception as e:
         return f"An error occurred: {str(e)}"
 
-st.markdown("""
-    <style>
-        .floating-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            padding: 15px;
-            font-size: 24px;
-            cursor: pointer;
-        }
-    </style>
-    <button class="floating-btn" id="chat-toggle">💬</button>
-    <script>
-        const chatButton = document.getElementById("chat-toggle");
-        chatButton.addEventListener("click", function() {
-            window.parent.postMessage("toggle-chat", "*");
-        });
-    </script>
-""", unsafe_allow_html=True)
-
-st.markdown(
+if __name__ == "__main__":
+    st.markdown(
     """
     <style>
-        .element-container:has(style){
-            display: none;
+        #MainMenu {
+            visibility: hidden;
         }
-        #button-after {
-            display: none;
+        footer {
+            visibility: hidden;
         }
-        .element-container:has(#button-after) {
-            display: none;
-        }
-        .element-container:has(#button-after) + div button {
-            background-color: orange;
-
+        header {
+            visibility: hidden;
         }
     </style>
     """, unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    if 'show_chat' not in st.session_state:
-        st.session_state.show_chat = False
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
@@ -219,24 +188,19 @@ if __name__ == "__main__":
     genai_docs = "./data_source/generative_ai"
     retriever = retriever(data_dir=genai_docs, data_type="pdf")
     st.markdown('<span id="button-after"></span>', unsafe_allow_html=True)
-    toggle_button = st.button("Show chat")
 
-    if (toggle_button):
-        st.session_state.show_chat = not st.session_state.show_chat
+    for message in st.session_state.messages:
+        with st.chat_message(message['role']):
+            st.markdown(message['content'])
 
-    if st.session_state.show_chat:
-        for message in st.session_state.messages:
-            with st.chat_message(message['role']):
-                st.markdown(message['content'])
+    query = st.chat_input("Your message")
+    if query:
+        st.session_state.messages.append({"role": "user", "content": query})
+        with st.chat_message("Human"):
+            st.markdown(query)
 
-        query = st.chat_input("Your message")
-        if query:
-            st.session_state.messages.append({"role": "user", "content": query})
-            with st.chat_message("Human"):
-                st.markdown(query)
-
-            thread_id = "user_session_12d5"
-            response_stream, response = assistant(query, thread_id)
-            st.session_state.messages.append({"role": "AI", "content": response})
-            with st.chat_message("AI"):
-                st.write_stream(response_stream)
+        thread_id = "user_session_12d5"
+        response_stream, response = assistant(query, thread_id)
+        st.session_state.messages.append({"role": "AI", "content": response})
+        with st.chat_message("AI"):
+            st.write_stream(response_stream)
