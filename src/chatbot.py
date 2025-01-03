@@ -2,8 +2,10 @@ import streamlit as st
 import sys
 import os
 import time
-__import__('pysqlite3')
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+import string
+import random
+# __import__('pysqlite3')
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 from dotenv import load_dotenv
 from langchain_core.tools import tool
@@ -165,21 +167,6 @@ def assistant(query: str, thread_id: str):
         return f"An error occurred: {str(e)}"
 
 if __name__ == "__main__":
-    st.markdown(
-    """
-    <style>
-        #MainMenu {
-            visibility: hidden;
-        }
-        footer {
-            visibility: hidden;
-        }
-        header {
-            visibility: hidden;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
     if "messages" not in st.session_state:
         st.session_state.messages = [
             {"role": "AI", "content": "Welcome. How can I assist you today?"},
@@ -199,7 +186,7 @@ if __name__ == "__main__":
         with st.chat_message("Human"):
             st.markdown(query)
 
-        thread_id = "user_session_12d5"
+        thread_id = st.query_params['threadId'] if 'threadId' in st.query_params else ''.join(random.choices(string.ascii_uppercase + string.digits, k=16))
         response_stream, response = assistant(query, thread_id)
         st.session_state.messages.append({"role": "AI", "content": response})
         with st.chat_message("AI"):
