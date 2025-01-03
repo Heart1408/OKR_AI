@@ -1,4 +1,5 @@
 import streamlit as st
+from dotenv import load_dotenv
 from langchain_core.tools import tool
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, RemoveMessage, AIMessage
 from langgraph.graph import MessagesState, StateGraph, END
@@ -6,27 +7,14 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 import sys
 import os
-from dotenv import load_dotenv
+import time
+
 load_dotenv()
 
 sys.path.insert(1, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from src.rag.file_loader import Loader
 from src.rag.vectorstore import VectorDB
 from src.base.llm_model import get_llm
-
-@tool
-def retriever_tool(query: str):
-    """Retrieve information related to query."""
-    retriever_results = retriever.invoke(query)
-    return "\n\n".join(doc.page_content for doc in retriever_results)
-
-@st.cache_resource
-def retriever(data_dir, data_type):
-    doc_loaded = Loader(file_type=data_type).load_dir(data_dir, workers=2)
-    retriever = VectorDB(documents = doc_loaded).get_retriever()
-
-    return retriever
-
 
 llm = get_llm()
 memory = MemorySaver()
@@ -41,6 +29,19 @@ Your main role is to:
 
 class State(MessagesState):
     summary: str
+
+@tool
+def retriever_tool(query: str):
+    """Retrieve information related to query."""
+    retriever_results = retriever.invoke(query)
+    return "\n\n".join(doc.page_content for doc in retriever_results)
+
+@st.cache_resource
+def retriever(data_dir, data_type):
+    doc_loaded = Loader(file_type=data_type).load_dir(data_dir, workers=2)
+    retriever = VectorDB(documents = doc_loaded).get_retriever()
+
+    return retriever
 
 tools = ToolNode(tools=[retriever_tool])
 
@@ -139,6 +140,11 @@ def build_graph():
     graph = graph_builder.compile(checkpointer=memory)
     return graph
 
+def stream_data(data):
+    for chunk in data.split(" "):
+        yield chunk + " "
+        time.sleep(0.04)
+
 def assistant(query: str, thread_id: str):
     graph = build_graph()
     config = {"configurable": {"thread_id": thread_id}}
@@ -148,36 +154,86 @@ def assistant(query: str, thread_id: str):
             stream_mode="values",
             config=config,
         ):
-            response = step["messages"]
-            conversation = []
 
-            # t = step["messages"][-1]
-            # print(t)
+            response = step["messages"][-1].content
 
-            for msg in response:
-                if hasattr(msg, 'content') and hasattr(msg, 'id'):
-                    msg_type = "HumanMessage" if isinstance(msg, HumanMessage) else "AIMessage"
-                    conversation.append({
-                        "content": msg.content,
-                        "id": msg.id,
-                        "type": msg_type
-                    })
-
-        return conversation
+        return stream_data(response), response
     except Exception as e:
         return f"An error occurred: {str(e)}"
 
+st.markdown("""
+    <style>
+        .floating-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            padding: 15px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+    </style>
+    <button class="floating-btn" id="chat-toggle">💬</button>
+    <script>
+        const chatButton = document.getElementById("chat-toggle");
+        chatButton.addEventListener("click", function() {
+            window.parent.postMessage("toggle-chat", "*");
+        });
+    </script>
+""", unsafe_allow_html=True)
+
+st.markdown(
+    """
+    <style>
+        .element-container:has(style){
+            display: none;
+        }
+        #button-after {
+            display: none;
+        }
+        .element-container:has(#button-after) {
+            display: none;
+        }
+        .element-container:has(#button-after) + div button {
+            background-color: orange;
+
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
 if __name__ == "__main__":
+    if 'show_chat' not in st.session_state:
+        st.session_state.show_chat = False
+
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {"role": "AI", "content": "Welcome. How can I assist you today?"},
+        ]
+
     genai_docs = "./data_source/generative_ai"
     retriever = retriever(data_dir=genai_docs, data_type="pdf")
-    query = st.chat_input("Your message")
-    if query:
-        thread_id = "user_session_12d5"
-        conversation = assistant(query, thread_id)
-        for msg in conversation:
-            if msg["type"] == "HumanMessage":
-                with st.chat_message("Human"):
-                    st.markdown(msg["content"])
-            else:
-                with st.chat_message("AI"):
-                    st.markdown(msg["content"])
+    st.markdown('<span id="button-after"></span>', unsafe_allow_html=True)
+    toggle_button = st.button("Show chat")
+
+    if (toggle_button):
+        st.session_state.show_chat = not st.session_state.show_chat
+
+    if st.session_state.show_chat:
+        for message in st.session_state.messages:
+            with st.chat_message(message['role']):
+                st.markdown(message['content'])
+
+        query = st.chat_input("Your message")
+        if query:
+            st.session_state.messages.append({"role": "user", "content": query})
+            with st.chat_message("Human"):
+                st.markdown(query)
+
+            thread_id = "user_session_12d5"
+            response_stream, response = assistant(query, thread_id)
+            st.session_state.messages.append({"role": "AI", "content": response})
+            with st.chat_message("AI"):
+                st.write_stream(response_stream)
